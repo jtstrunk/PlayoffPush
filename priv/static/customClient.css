@@ -14,3 +14,105 @@
     width: 150px;
     cursor: pointer;
 }
+
+.draft{
+    display: flex;
+    flex-direction: row;
+}
+.draft p{ 
+    width: 125px;
+}
+
+.users {
+    width: 60px;
+}
+.users p{
+    height: 80px;
+}
+
+.playerHeader{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    margin-right: 8px;
+}
+
+.firstName{
+    font-size: 16px;
+}
+.lastName{
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.WR {
+    background-color: #3C3D37;
+    width: 120px;
+    border-radius: 5px;
+    margin: 2.5px;
+}
+.WR span{
+    font-size: 12px;
+}
+
+.RB {
+    background-color: #697565;
+    width: 120px;
+    border-radius: 5px;
+    margin: 2.5px;
+}
+.RB span{
+    font-size: 12px;
+}
+
+.QB {
+    background-color: #2E4053;
+    width: 120px;
+    border-radius: 5px;
+    margin: 2.5px;
+}
+.QB span{
+    font-size: 12px;
+}
+
+.TE {
+    background-color: #AA9C87;
+    width: 120px;
+    border-radius: 5px;
+    margin: 2.5px;
+}
+.TE span{
+    font-size: 12px;
+}
+
+
+.availablePlayers{
+    height: 350px;
+    width: 50%;
+    overflow-y: auto;
+}
+.draftablePlayer {
+    display: flex;
+    flex-direction: row;
+    margin: 3px 0px;
+}
+.draftablePlayer div {
+    height: 40px;
+    display: flex;
+    flex-direction: column;
+    
+}
+.draftablePlayer span {
+    font-size: 11px;
+}
+
+.draftPlayer{
+    font-size: 24px;
+}
+.draftPlayer:hover{
+    cursor: pointer;
+}
+.posName {
+    display: flex !important;
+    flex-direction: row !important;
+}

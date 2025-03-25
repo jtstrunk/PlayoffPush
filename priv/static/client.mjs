@@ -373,6 +373,14 @@ function makeError(variant, module, line, fn, message, extra) {
   return error;
 }
 
+// build/dev/javascript/gleam_stdlib/gleam/order.mjs
+var Lt = class extends CustomType {
+};
+var Eq = class extends CustomType {
+};
+var Gt = class extends CustomType {
+};
+
 // build/dev/javascript/gleam_stdlib/gleam/option.mjs
 var None = class extends CustomType {
 };
@@ -414,6 +422,86 @@ function keys(dict2) {
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/list.mjs
+function reverse_and_prepend(loop$prefix, loop$suffix) {
+  while (true) {
+    let prefix = loop$prefix;
+    let suffix = loop$suffix;
+    if (prefix.hasLength(0)) {
+      return suffix;
+    } else {
+      let first$1 = prefix.head;
+      let rest$1 = prefix.tail;
+      loop$prefix = rest$1;
+      loop$suffix = prepend(first$1, suffix);
+    }
+  }
+}
+function reverse(list2) {
+  return reverse_and_prepend(list2, toList([]));
+}
+function filter_loop(loop$list, loop$fun, loop$acc) {
+  while (true) {
+    let list2 = loop$list;
+    let fun = loop$fun;
+    let acc = loop$acc;
+    if (list2.hasLength(0)) {
+      return reverse(acc);
+    } else {
+      let first$1 = list2.head;
+      let rest$1 = list2.tail;
+      let new_acc = (() => {
+        let $ = fun(first$1);
+        if ($) {
+          return prepend(first$1, acc);
+        } else {
+          return acc;
+        }
+      })();
+      loop$list = rest$1;
+      loop$fun = fun;
+      loop$acc = new_acc;
+    }
+  }
+}
+function filter(list2, predicate) {
+  return filter_loop(list2, predicate, toList([]));
+}
+function map_loop(loop$list, loop$fun, loop$acc) {
+  while (true) {
+    let list2 = loop$list;
+    let fun = loop$fun;
+    let acc = loop$acc;
+    if (list2.hasLength(0)) {
+      return reverse(acc);
+    } else {
+      let first$1 = list2.head;
+      let rest$1 = list2.tail;
+      loop$list = rest$1;
+      loop$fun = fun;
+      loop$acc = prepend(fun(first$1), acc);
+    }
+  }
+}
+function map(list2, fun) {
+  return map_loop(list2, fun, toList([]));
+}
+function append_loop(loop$first, loop$second) {
+  while (true) {
+    let first2 = loop$first;
+    let second = loop$second;
+    if (first2.hasLength(0)) {
+      return second;
+    } else {
+      let first$1 = first2.head;
+      let rest$1 = first2.tail;
+      loop$first = rest$1;
+      loop$second = prepend(first$1, second);
+    }
+  }
+}
+function append(first2, second) {
+  return append_loop(reverse(first2), second);
+}
 function fold(loop$list, loop$initial, loop$fun) {
   while (true) {
     let list2 = loop$list;
@@ -450,6 +538,28 @@ function index_fold_loop(loop$over, loop$acc, loop$with, loop$index) {
 }
 function index_fold(list2, initial, fun) {
   return index_fold_loop(list2, initial, fun, 0);
+}
+function range_loop(loop$start, loop$stop, loop$acc) {
+  while (true) {
+    let start3 = loop$start;
+    let stop = loop$stop;
+    let acc = loop$acc;
+    let $ = compare2(start3, stop);
+    if ($ instanceof Eq) {
+      return prepend(stop, acc);
+    } else if ($ instanceof Gt) {
+      loop$start = start3;
+      loop$stop = stop + 1;
+      loop$acc = prepend(stop, acc);
+    } else {
+      loop$start = start3;
+      loop$stop = stop - 1;
+      loop$acc = prepend(stop, acc);
+    }
+  }
+}
+function range(start3, stop) {
+  return range_loop(start3, stop, toList([]));
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/string.mjs
@@ -1242,6 +1352,21 @@ function map_to_list(map4) {
 }
 function map_insert(key, value, map4) {
   return map4.set(key, value);
+}
+
+// build/dev/javascript/gleam_stdlib/gleam/int.mjs
+function compare2(a, b) {
+  let $ = a === b;
+  if ($) {
+    return new Eq();
+  } else {
+    let $1 = a < b;
+    if ($1) {
+      return new Lt();
+    } else {
+      return new Gt();
+    }
+  }
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/bool.mjs
@@ -2119,11 +2244,20 @@ function header(attrs, children2) {
 function h1(attrs, children2) {
   return element("h1", attrs, children2);
 }
+function h2(attrs, children2) {
+  return element("h2", attrs, children2);
+}
 function h3(attrs, children2) {
   return element("h3", attrs, children2);
 }
 function div(attrs, children2) {
   return element("div", attrs, children2);
+}
+function p(attrs, children2) {
+  return element("p", attrs, children2);
+}
+function span(attrs, children2) {
+  return element("span", attrs, children2);
 }
 function button(attrs, children2) {
   return element("button", attrs, children2);
@@ -2141,87 +2275,473 @@ function on_click(msg) {
 
 // build/dev/javascript/client/client.mjs
 var Model2 = class extends CustomType {
-  constructor(count, view_mode) {
+  constructor(count, view_mode, users, useronedrafted, usertwodrafted, userthreedrafted, userfourdrafted, players, playernumber, draftpick, direction) {
     super();
     this.count = count;
     this.view_mode = view_mode;
+    this.users = users;
+    this.useronedrafted = useronedrafted;
+    this.usertwodrafted = usertwodrafted;
+    this.userthreedrafted = userthreedrafted;
+    this.userfourdrafted = userfourdrafted;
+    this.players = players;
+    this.playernumber = playernumber;
+    this.draftpick = draftpick;
+    this.direction = direction;
   }
 };
-var Counter = class extends CustomType {
+var TeamView = class extends CustomType {
 };
 var Draft = class extends CustomType {
 };
-var Increment = class extends CustomType {
+var Player = class extends CustomType {
+  constructor(firstname, lastname, position, team, adp) {
+    super();
+    this.firstname = firstname;
+    this.lastname = lastname;
+    this.position = position;
+    this.team = team;
+    this.adp = adp;
+  }
 };
-var IncrementTwo = class extends CustomType {
+var Forward = class extends CustomType {
 };
-var Decrement = class extends CustomType {
+var Backward = class extends CustomType {
 };
 var ToggleView = class extends CustomType {
 };
+var IncrementPlayerNumber = class extends CustomType {
+  constructor(x0) {
+    super();
+    this[0] = x0;
+  }
+};
 function init2(_) {
-  return new Model2(0, new Counter());
+  return new Model2(
+    0,
+    new Draft(),
+    toList(["Nate", "Josh", "Sam", "Ethan"]),
+    toList([]),
+    toList([]),
+    toList([]),
+    toList([]),
+    toList([
+      new Player("Justin", "Jefferson", "WR", "MIN", 1),
+      new Player("Ja'Marr", "Chase", "WR", "CIN", 2),
+      new Player("CeeDee ", "Lamb", "WR", "DAL", 3),
+      new Player("Bijan", "Robinson", "RB", "ATL", 4),
+      new Player("Josh", "Allen", "QB", "BUF", 5),
+      new Player("Saquon", "Barkley", "RB", "PHI", 6),
+      new Player("Amon-Ra", "St. Brown", "WR", "DET", 7),
+      new Player("Jahmyr", "Gibbs", "RB", "DET", 8),
+      new Player("Patrick", "Mahomes", "QB", "KC", 9),
+      new Player("Puka", "Nacua", "WR", "LAR", 10),
+      new Player("AJ", "Brown", "WR", "PHI", 11),
+      new Player("Lamar", "Jackson", "QB", "BAL", 12),
+      new Player("Nico", "Collins", "WR", "HOU", 13),
+      new Player("Jalen", "Hurts", "QB", "PHI", 14),
+      new Player("Justin", "Herbert", "QB", "LAC", 15),
+      new Player("C.J.", "Stroud", "QB", "HOU", 16),
+      new Player("Travis", "Kelce", "TE", "KC", 17),
+      new Player("Sam", "LaPorta", "TE", "DET", 18),
+      new Player("Josh", "Jacobs", "RB", "GB", 19),
+      new Player("Joe", "Mixon", "RB", "HOU", 20),
+      new Player("Cooper", "Kupp", "WR", "LAR", 21),
+      new Player("T.J.", "Hockenson", "TE", "MIN", 22),
+      new Player("Derrick", "Henry", "RB", "BAL", 23),
+      new Player("Tee", "Higgins", "WR", "CIN", 24),
+      new Player("George", "Pickens", "WR", "PIT", 25),
+      new Player("Terry", "McLaurin", "WR", "WAS", 26),
+      new Player("Mike", "Evans", "WR", "TB", 27),
+      new Player("Jordan", "Love", "QB", "GB", 28),
+      new Player("Zay", "Flowers", "WR", "BAL", 29),
+      new Player("Jared", "Goff", "QB", "DET", 30),
+      new Player("Joe", "Burrow", "QB", "CIN", 31),
+      new Player("Jordan", "Addison", "WR", "MIN", 32),
+      new Player("Kyren", "Williams", "RB", "LAR", 33),
+      new Player("James", "Cook", "RB", "BUF", 34),
+      new Player("Christian", "Watson", "WR", "GB", 35),
+      new Player("Jameson", "Williams", "WR", "DET", 36),
+      new Player("Dallas", "Goedert", "TE", "PHI", 37),
+      new Player("Matthew", "Stafford", "QB", "LAR", 38),
+      new Player("Xavier", "Worthy", "WR", "KC", 39),
+      new Player("Jayden", "Daniels", "QB", "WAS", 40),
+      new Player("Baker", "Mayfield", "QB", "TB", 41),
+      new Player("Chase", "Brown", "RB", "CIN", 42),
+      new Player("Khalil", "Shakir", "WR", "BUF", 43),
+      new Player("Ladd", "McConkey", "WR", "LAC", 44),
+      new Player("Sam", "Darnold", "QB", "MIN", 45),
+      new Player("Bucky", "Iriving", "RB", "TB", 46)
+    ]),
+    1,
+    0,
+    new Forward()
+  );
 }
 function update(model, msg) {
   if (msg instanceof ToggleView) {
     let new_mode = (() => {
       let $ = model.view_mode;
-      if ($ instanceof Counter) {
+      if ($ instanceof TeamView) {
         return new Draft();
       } else {
-        return new Counter();
+        return new TeamView();
       }
     })();
     let _record = model;
-    return new Model2(_record.count, new_mode);
-  } else if (msg instanceof Increment) {
-    let _record = model;
-    return new Model2(model.count + 1, _record.view_mode);
-  } else if (msg instanceof Decrement) {
-    let _record = model;
-    return new Model2(model.count - 1, _record.view_mode);
+    return new Model2(
+      _record.count,
+      new_mode,
+      _record.users,
+      _record.useronedrafted,
+      _record.usertwodrafted,
+      _record.userthreedrafted,
+      _record.userfourdrafted,
+      _record.players,
+      _record.playernumber,
+      _record.draftpick,
+      _record.direction
+    );
   } else {
-    let _record = model;
-    return new Model2(model.count + 2, _record.view_mode);
+    let player = msg[0];
+    let $ = model.draftpick;
+    if ($ === 40) {
+      return model;
+    } else {
+      let new_playernumber = (() => {
+        let $1 = model.direction;
+        let $2 = model.playernumber;
+        if ($1 instanceof Forward && $2 === 1) {
+          return 2;
+        } else if ($1 instanceof Forward && $2 === 2) {
+          return 3;
+        } else if ($1 instanceof Forward && $2 === 3) {
+          return 4;
+        } else if ($1 instanceof Forward && $2 === 4) {
+          return 4;
+        } else if ($1 instanceof Backward && $2 === 4) {
+          return 3;
+        } else if ($1 instanceof Backward && $2 === 3) {
+          return 2;
+        } else if ($1 instanceof Backward && $2 === 2) {
+          return 1;
+        } else if ($1 instanceof Backward && $2 === 1) {
+          return 1;
+        } else {
+          let n = $2;
+          return n;
+        }
+      })();
+      let new_direction = (() => {
+        let $1 = model.direction;
+        let $2 = model.playernumber;
+        if ($1 instanceof Forward && $2 === 4 && new_playernumber === 4) {
+          return new Backward();
+        } else if ($1 instanceof Backward && $2 === 1 && new_playernumber === 1) {
+          return new Forward();
+        } else {
+          let dir = $1;
+          return dir;
+        }
+      })();
+      let new_draftpick = model.draftpick + 1;
+      let player_with_updated_adp = (() => {
+        let _record2 = player;
+        return new Player(
+          _record2.firstname,
+          _record2.lastname,
+          _record2.position,
+          _record2.team,
+          new_draftpick
+        );
+      })();
+      let updated_players = filter(
+        model.players,
+        (p2) => {
+          return !isEqual(p2, player);
+        }
+      );
+      let new_model = (() => {
+        let $1 = model.playernumber;
+        if ($1 === 1) {
+          let _record2 = model;
+          return new Model2(
+            _record2.count,
+            _record2.view_mode,
+            _record2.users,
+            append(
+              model.useronedrafted,
+              toList([player_with_updated_adp])
+            ),
+            _record2.usertwodrafted,
+            _record2.userthreedrafted,
+            _record2.userfourdrafted,
+            _record2.players,
+            _record2.playernumber,
+            _record2.draftpick,
+            _record2.direction
+          );
+        } else if ($1 === 2) {
+          let _record2 = model;
+          return new Model2(
+            _record2.count,
+            _record2.view_mode,
+            _record2.users,
+            _record2.useronedrafted,
+            append(
+              model.usertwodrafted,
+              toList([player_with_updated_adp])
+            ),
+            _record2.userthreedrafted,
+            _record2.userfourdrafted,
+            _record2.players,
+            _record2.playernumber,
+            _record2.draftpick,
+            _record2.direction
+          );
+        } else if ($1 === 3) {
+          let _record2 = model;
+          return new Model2(
+            _record2.count,
+            _record2.view_mode,
+            _record2.users,
+            _record2.useronedrafted,
+            _record2.usertwodrafted,
+            append(
+              model.userthreedrafted,
+              toList([player_with_updated_adp])
+            ),
+            _record2.userfourdrafted,
+            _record2.players,
+            _record2.playernumber,
+            _record2.draftpick,
+            _record2.direction
+          );
+        } else if ($1 === 4) {
+          let _record2 = model;
+          return new Model2(
+            _record2.count,
+            _record2.view_mode,
+            _record2.users,
+            _record2.useronedrafted,
+            _record2.usertwodrafted,
+            _record2.userthreedrafted,
+            append(
+              model.userfourdrafted,
+              toList([player_with_updated_adp])
+            ),
+            _record2.players,
+            _record2.playernumber,
+            _record2.draftpick,
+            _record2.direction
+          );
+        } else {
+          return model;
+        }
+      })();
+      let _record = new_model;
+      return new Model2(
+        _record.count,
+        _record.view_mode,
+        _record.users,
+        _record.useronedrafted,
+        _record.usertwodrafted,
+        _record.userthreedrafted,
+        _record.userfourdrafted,
+        updated_players,
+        new_playernumber,
+        new_draftpick,
+        new_direction
+      );
+    }
   }
 }
-function counter_view(count) {
+function round_label(round3) {
+  return p(
+    toList([class$("mb-2")]),
+    toList([text2("Round " + to_string(round3))])
+  );
+}
+function drafted_users_view(players) {
   return div(
-    toList([class$("text-white p-4")]),
+    toList([]),
     toList([
-      button(
-        toList([
-          class$("btn-primary"),
-          on_click(new Increment())
-        ]),
-        toList([text("+")])
-      ),
-      text(count),
-      button(
-        toList([
-          class$("btn-primary"),
-          on_click(new Decrement())
-        ]),
-        toList([text("-")])
-      ),
-      button(
-        toList([
-          class$("btn-primary"),
-          on_click(new IncrementTwo())
-        ]),
-        toList([text("+ two")])
+      div(
+        toList([class$("flex flex-row")]),
+        map(
+          players,
+          (player) => {
+            return div(
+              toList([class$(player.position)]),
+              toList([
+                div(
+                  toList([class$("playerHeader")]),
+                  toList([
+                    div(
+                      toList([]),
+                      toList([
+                        span(
+                          toList([class$("ml-2")]),
+                          toList([text2(player.position)])
+                        ),
+                        span(toList([]), toList([text2(" - ")])),
+                        span(
+                          toList([]),
+                          toList([text2(player.team)])
+                        )
+                      ])
+                    ),
+                    div(
+                      toList([]),
+                      toList([
+                        span(
+                          toList([class$("ml-2")]),
+                          toList([text2(to_string(player.adp))])
+                        )
+                      ])
+                    )
+                  ])
+                ),
+                p(
+                  toList([class$("ml-2 firstName")]),
+                  toList([text2(player.firstname)])
+                ),
+                p(
+                  toList([class$("ml-2 lastName")]),
+                  toList([text2(player.lastname)])
+                )
+              ])
+            );
+          }
+        )
       )
     ])
   );
 }
-function draft_view() {
+function draft_view(users, players, useronedrafted, usertwodrafted, userthreedrafted, userfourdrafted) {
   return div(
-    toList([class$("p-4 text-white text-xl")]),
-    toList([text("Draft a Player")])
+    toList([class$("p-4 text-white")]),
+    toList([
+      h2(
+        toList([class$("text-xl mb-4")]),
+        toList([text("Draft Board")])
+      ),
+      div(
+        toList([class$("draftBoard")]),
+        toList([
+          div(
+            toList([class$("draft")]),
+            toList([
+              p(
+                toList([class$("mb-2 ml-20")]),
+                toList([text2("Round 1")])
+              ),
+              div(
+                toList([class$("draft")]),
+                map(
+                  range(2, 10),
+                  (round3) => {
+                    return round_label(round3);
+                  }
+                )
+              )
+            ])
+          ),
+          div(
+            toList([class$("flex flex-row")]),
+            toList([
+              div(
+                toList([class$("users")]),
+                map(
+                  users,
+                  (user) => {
+                    return p(
+                      toList([class$("")]),
+                      toList([text2(user)])
+                    );
+                  }
+                )
+              ),
+              div(
+                toList([class$("test")]),
+                toList([
+                  drafted_users_view(useronedrafted),
+                  drafted_users_view(usertwodrafted),
+                  drafted_users_view(userthreedrafted),
+                  drafted_users_view(userfourdrafted)
+                ])
+              )
+            ])
+          )
+        ])
+      ),
+      div(
+        toList([class$("availablePlayers")]),
+        toList([
+          div(
+            toList([]),
+            map(
+              players,
+              (player) => {
+                return div(
+                  toList([class$("draftablePlayer")]),
+                  toList([
+                    div(
+                      toList([]),
+                      toList([
+                        p(
+                          toList([
+                            class$("draftPlayer"),
+                            on_click(new IncrementPlayerNumber(player))
+                          ]),
+                          toList([text2("+")])
+                        )
+                      ])
+                    ),
+                    div(
+                      toList([]),
+                      toList([
+                        p(
+                          toList([class$("ml-2 firstName")]),
+                          toList([
+                            text2(
+                              player.firstname + " " + player.lastname
+                            )
+                          ])
+                        ),
+                        div(
+                          toList([class$("posName")]),
+                          toList([
+                            span(
+                              toList([class$("ml-2")]),
+                              toList([text2(player.position)])
+                            ),
+                            span(toList([]), toList([text2(" - ")])),
+                            span(
+                              toList([]),
+                              toList([text2(player.team)])
+                            )
+                          ])
+                        )
+                      ])
+                    )
+                  ])
+                );
+              }
+            )
+          )
+        ])
+      )
+    ])
+  );
+}
+function team_view() {
+  return div(
+    toList([class$("text-white p-4")]),
+    toList([p(toList([]), toList([text("show teams")]))])
   );
 }
 function view(model) {
-  let count = to_string(model.count);
   return div(
     toList([class$("min-h-screen w-full bg-header-dark")]),
     toList([
@@ -2242,7 +2762,7 @@ function view(model) {
               h3(
                 toList([class$("font-bold pl-2")]),
                 toList([
-                  text2("Experience Fantasy Football in the NFL Playoffs")
+                  text2("Experience Fantasy Football for the NFL Playoffs")
                 ])
               )
             ])
@@ -2258,19 +2778,28 @@ function view(model) {
       ),
       (() => {
         let $ = model.view_mode;
-        if ($ instanceof Counter) {
+        if ($ instanceof TeamView) {
           return div(
             toList([
               class$("flex justify-center items-center h-full")
             ]),
-            toList([counter_view(count)])
+            toList([team_view()])
           );
         } else {
           return div(
             toList([
               class$("flex justify-center items-center h-full")
             ]),
-            toList([draft_view()])
+            toList([
+              draft_view(
+                model.users,
+                model.players,
+                model.useronedrafted,
+                model.usertwodrafted,
+                model.userthreedrafted,
+                model.userfourdrafted
+              )
+            ])
           );
         }
       })()
@@ -2284,7 +2813,7 @@ function main() {
     throw makeError(
       "let_assert",
       "client",
-      10,
+      12,
       "main",
       "Pattern match failed, no pattern matched the value.",
       { value: $ }
