@@ -122,50 +122,89 @@ pub fn update(model: Model, msg: Msg) -> Model {
       Model(..model, view_mode: new_mode)
     }
     IncrementPlayerNumber(player) -> {
-      case model.draftpick {
-        40 -> model  // If draft pick is 40, return the unchanged model
+      io.println("picked by " <> int.to_string(model.playernumber))
+      io.println("type " <> player.position)
+
+      case model.playernumber {
+        1 | 2 | 3 | 4 -> {
+          let drafted_list = get_drafted_list(model, model.playernumber)
+          let count = count_players(drafted_list, player.position)
+          io.println(player.position <> " count: " <> int.to_string(count))
+
+          let is_valid_draft = case player.position, count {
+            "QB", 0 -> True
+            "QB", 1 -> True
+            "TE", 0 -> True
+            "TE", 1 -> True
+            "WR", 0 -> True
+            "WR", 1 -> True
+            "WR", 2 -> True
+            "RB", 0 -> True
+            "RB", 1 -> True
+            "RB", 2 -> True
+            _, _ -> False
+          }
+
+          case is_valid_draft {
+            True -> {
+              case model.draftpick {
+                40 -> model  // If draft pick is 40, return the unchanged model
+                _ -> {
+                  // Existing logic goes here
+                  let new_playernumber = case model.direction, model.playernumber {
+                    Forward, 1 -> 2
+                    Forward, 2 -> 3
+                    Forward, 3 -> 4
+                    Forward, 4 -> 4
+                    Backward, 4 -> 3
+                    Backward, 3 -> 2
+                    Backward, 2 -> 1
+                    Backward, 1 -> 1
+                    _, n -> n
+                  }
+
+                  let new_direction = case model.direction, model.playernumber, new_playernumber {
+                    Forward, 4, 4 -> Backward
+                    Backward, 1, 1 -> Forward
+                    dir, _, _ -> dir
+                  }
+
+                  let new_draftpick = model.draftpick + 1
+                  let player_with_updated_adp = Player(..player, adp: new_draftpick)
+            
+                  let updated_players = list.filter(model.players, fn(p) { p != player })
+                  let new_model = case model.playernumber {
+                    1 -> Model(..model, useronedrafted: list.append(model.useronedrafted, [player_with_updated_adp]))
+                    2 -> Model(..model, usertwodrafted: list.append(model.usertwodrafted, [player_with_updated_adp]))
+                    3 -> Model(..model, userthreedrafted: list.append(model.userthreedrafted, [player_with_updated_adp]))
+                    4 -> Model(..model, userfourdrafted: list.append(model.userfourdrafted, [player_with_updated_adp]))
+                    _ -> model
+                  }
+
+                  Model(
+                    ..new_model,
+                    playernumber: new_playernumber, 
+                    direction: new_direction,
+                    players: updated_players,
+                    draftpick: new_draftpick
+                  )
+                }
+              }
+            }
+            False -> {
+              io.println("Cannot draft more players of this position")
+              model
+            }
+          }
+        }
         _ -> {
-          // Existing logic goes here
-          let new_playernumber = case model.direction, model.playernumber {
-            Forward, 1 -> 2
-            Forward, 2 -> 3
-            Forward, 3 -> 4
-            Forward, 4 -> 4
-            Backward, 4 -> 3
-            Backward, 3 -> 2
-            Backward, 2 -> 1
-            Backward, 1 -> 1
-            _, n -> n
-          }
-
-          let new_direction = case model.direction, model.playernumber, new_playernumber {
-            Forward, 4, 4 -> Backward
-            Backward, 1, 1 -> Forward
-            dir, _, _ -> dir
-          }
-
-          let new_draftpick = model.draftpick + 1
-          let player_with_updated_adp = Player(..player, adp: new_draftpick)
-    
-          let updated_players = list.filter(model.players, fn(p) { p != player })
-          let new_model = case model.playernumber {
-            1 -> Model(..model, useronedrafted: list.append(model.useronedrafted, [player_with_updated_adp]))
-            2 -> Model(..model, usertwodrafted: list.append(model.usertwodrafted, [player_with_updated_adp]))
-            3 -> Model(..model, userthreedrafted: list.append(model.userthreedrafted, [player_with_updated_adp]))
-            4 -> Model(..model, userfourdrafted: list.append(model.userfourdrafted, [player_with_updated_adp]))
-            _ -> model
-          }
-
-          Model(
-            ..new_model,
-            playernumber: new_playernumber, 
-            direction: new_direction,
-            players: updated_players,
-            draftpick: new_draftpick
-          )
+          io.println("Invalid player number")
+          model
         }
       }
     }
+
+
 
   }
 }
@@ -276,6 +315,24 @@ fn draft_view(users: List(String), players: List(Player), useronedrafted: List(P
 
 
   ])
+}
+
+// Helper function to get the drafted list based on player number
+fn get_drafted_list(model: Model, playernumber: Int) -> List(Player) {
+  case playernumber {
+    1 -> model.useronedrafted
+    2 -> model.usertwodrafted
+    3 -> model.userthreedrafted
+    4 -> model.userfourdrafted
+    _ -> []
+  }
+}
+
+// Helper function to count players by position
+fn count_players(players: List(Player), position: String) -> Int {
+  players
+  |> list.filter(fn(player) { player.position == position })
+  |> list.length
 }
 
 

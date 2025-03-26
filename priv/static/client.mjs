@@ -38,12 +38,12 @@ var List = class {
   // @internal
   countLength() {
     let current = this;
-    let length2 = 0;
+    let length3 = 0;
     while (current) {
       current = current.tail;
-      length2++;
+      length3++;
     }
-    return length2 - 1;
+    return length3 - 1;
   }
 };
 function prepend(element2, tail) {
@@ -422,6 +422,22 @@ function keys(dict2) {
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/list.mjs
+function length_loop(loop$list, loop$count) {
+  while (true) {
+    let list2 = loop$list;
+    let count = loop$count;
+    if (list2.atLeastLength(1)) {
+      let list$1 = list2.tail;
+      loop$list = list$1;
+      loop$count = count + 1;
+    } else {
+      return count;
+    }
+  }
+}
+function length(list2) {
+  return length_loop(list2, 0);
+}
 function reverse_and_prepend(loop$prefix, loop$suffix) {
   while (true) {
     let prefix = loop$prefix;
@@ -1344,6 +1360,9 @@ var trim_start_regex = /* @__PURE__ */ new RegExp(
   `^[${unicode_whitespaces}]*`
 );
 var trim_end_regex = /* @__PURE__ */ new RegExp(`[${unicode_whitespaces}]*$`);
+function console_log(term) {
+  console.log(term);
+}
 function new_map() {
   return Dict.new();
 }
@@ -2378,6 +2397,29 @@ function init2(_) {
     new Forward()
   );
 }
+function get_drafted_list(model, playernumber) {
+  if (playernumber === 1) {
+    return model.useronedrafted;
+  } else if (playernumber === 2) {
+    return model.usertwodrafted;
+  } else if (playernumber === 3) {
+    return model.userthreedrafted;
+  } else if (playernumber === 4) {
+    return model.userfourdrafted;
+  } else {
+    return toList([]);
+  }
+}
+function count_players(players, position) {
+  let _pipe = players;
+  let _pipe$1 = filter(
+    _pipe,
+    (player) => {
+      return player.position === position;
+    }
+  );
+  return length(_pipe$1);
+}
 function update(model, msg) {
   if (msg instanceof ToggleView) {
     let new_mode = (() => {
@@ -2404,155 +2446,752 @@ function update(model, msg) {
     );
   } else {
     let player = msg[0];
-    let $ = model.draftpick;
-    if ($ === 40) {
-      return model;
-    } else {
-      let new_playernumber = (() => {
-        let $1 = model.direction;
-        let $2 = model.playernumber;
-        if ($1 instanceof Forward && $2 === 1) {
-          return 2;
-        } else if ($1 instanceof Forward && $2 === 2) {
-          return 3;
-        } else if ($1 instanceof Forward && $2 === 3) {
-          return 4;
-        } else if ($1 instanceof Forward && $2 === 4) {
-          return 4;
-        } else if ($1 instanceof Backward && $2 === 4) {
-          return 3;
-        } else if ($1 instanceof Backward && $2 === 3) {
-          return 2;
-        } else if ($1 instanceof Backward && $2 === 2) {
-          return 1;
-        } else if ($1 instanceof Backward && $2 === 1) {
-          return 1;
+    console_log("picked by " + to_string(model.playernumber));
+    console_log("type " + player.position);
+    let $ = model.playernumber;
+    if ($ === 1) {
+      let drafted_list = get_drafted_list(model, model.playernumber);
+      let count = count_players(drafted_list, player.position);
+      console_log(player.position + " count: " + to_string(count));
+      let is_valid_draft = (() => {
+        let $1 = player.position;
+        if ($1 === "QB" && count === 0) {
+          return true;
+        } else if ($1 === "QB" && count === 1) {
+          return true;
+        } else if ($1 === "TE" && count === 0) {
+          return true;
+        } else if ($1 === "TE" && count === 1) {
+          return true;
+        } else if ($1 === "WR" && count === 0) {
+          return true;
+        } else if ($1 === "WR" && count === 1) {
+          return true;
+        } else if ($1 === "WR" && count === 2) {
+          return true;
+        } else if ($1 === "RB" && count === 0) {
+          return true;
+        } else if ($1 === "RB" && count === 1) {
+          return true;
+        } else if ($1 === "RB" && count === 2) {
+          return true;
         } else {
-          let n = $2;
-          return n;
+          return false;
         }
       })();
-      let new_direction = (() => {
-        let $1 = model.direction;
-        let $2 = model.playernumber;
-        if ($1 instanceof Forward && $2 === 4 && new_playernumber === 4) {
-          return new Backward();
-        } else if ($1 instanceof Backward && $2 === 1 && new_playernumber === 1) {
-          return new Forward();
-        } else {
-          let dir = $1;
-          return dir;
-        }
-      })();
-      let new_draftpick = model.draftpick + 1;
-      let player_with_updated_adp = (() => {
-        let _record2 = player;
-        return new Player(
-          _record2.firstname,
-          _record2.lastname,
-          _record2.position,
-          _record2.team,
-          new_draftpick
-        );
-      })();
-      let updated_players = filter(
-        model.players,
-        (p2) => {
-          return !isEqual(p2, player);
-        }
-      );
-      let new_model = (() => {
-        let $1 = model.playernumber;
-        if ($1 === 1) {
-          let _record2 = model;
-          return new Model2(
-            _record2.count,
-            _record2.view_mode,
-            _record2.users,
-            append(
-              model.useronedrafted,
-              toList([player_with_updated_adp])
-            ),
-            _record2.usertwodrafted,
-            _record2.userthreedrafted,
-            _record2.userfourdrafted,
-            _record2.players,
-            _record2.playernumber,
-            _record2.draftpick,
-            _record2.direction
-          );
-        } else if ($1 === 2) {
-          let _record2 = model;
-          return new Model2(
-            _record2.count,
-            _record2.view_mode,
-            _record2.users,
-            _record2.useronedrafted,
-            append(
-              model.usertwodrafted,
-              toList([player_with_updated_adp])
-            ),
-            _record2.userthreedrafted,
-            _record2.userfourdrafted,
-            _record2.players,
-            _record2.playernumber,
-            _record2.draftpick,
-            _record2.direction
-          );
-        } else if ($1 === 3) {
-          let _record2 = model;
-          return new Model2(
-            _record2.count,
-            _record2.view_mode,
-            _record2.users,
-            _record2.useronedrafted,
-            _record2.usertwodrafted,
-            append(
-              model.userthreedrafted,
-              toList([player_with_updated_adp])
-            ),
-            _record2.userfourdrafted,
-            _record2.players,
-            _record2.playernumber,
-            _record2.draftpick,
-            _record2.direction
-          );
-        } else if ($1 === 4) {
-          let _record2 = model;
-          return new Model2(
-            _record2.count,
-            _record2.view_mode,
-            _record2.users,
-            _record2.useronedrafted,
-            _record2.usertwodrafted,
-            _record2.userthreedrafted,
-            append(
-              model.userfourdrafted,
-              toList([player_with_updated_adp])
-            ),
-            _record2.players,
-            _record2.playernumber,
-            _record2.draftpick,
-            _record2.direction
-          );
-        } else {
+      if (is_valid_draft) {
+        let $1 = model.draftpick;
+        if ($1 === 40) {
           return model;
+        } else {
+          let new_playernumber = (() => {
+            let $2 = model.direction;
+            let $3 = model.playernumber;
+            if ($2 instanceof Forward && $3 === 1) {
+              return 2;
+            } else if ($2 instanceof Forward && $3 === 2) {
+              return 3;
+            } else if ($2 instanceof Forward && $3 === 3) {
+              return 4;
+            } else if ($2 instanceof Forward && $3 === 4) {
+              return 4;
+            } else if ($2 instanceof Backward && $3 === 4) {
+              return 3;
+            } else if ($2 instanceof Backward && $3 === 3) {
+              return 2;
+            } else if ($2 instanceof Backward && $3 === 2) {
+              return 1;
+            } else if ($2 instanceof Backward && $3 === 1) {
+              return 1;
+            } else {
+              let n = $3;
+              return n;
+            }
+          })();
+          let new_direction = (() => {
+            let $2 = model.direction;
+            let $3 = model.playernumber;
+            if ($2 instanceof Forward && $3 === 4 && new_playernumber === 4) {
+              return new Backward();
+            } else if ($2 instanceof Backward && $3 === 1 && new_playernumber === 1) {
+              return new Forward();
+            } else {
+              let dir = $2;
+              return dir;
+            }
+          })();
+          let new_draftpick = model.draftpick + 1;
+          let player_with_updated_adp = (() => {
+            let _record2 = player;
+            return new Player(
+              _record2.firstname,
+              _record2.lastname,
+              _record2.position,
+              _record2.team,
+              new_draftpick
+            );
+          })();
+          let updated_players = filter(
+            model.players,
+            (p2) => {
+              return !isEqual(p2, player);
+            }
+          );
+          let new_model = (() => {
+            let $2 = model.playernumber;
+            if ($2 === 1) {
+              let _record2 = model;
+              return new Model2(
+                _record2.count,
+                _record2.view_mode,
+                _record2.users,
+                append(
+                  model.useronedrafted,
+                  toList([player_with_updated_adp])
+                ),
+                _record2.usertwodrafted,
+                _record2.userthreedrafted,
+                _record2.userfourdrafted,
+                _record2.players,
+                _record2.playernumber,
+                _record2.draftpick,
+                _record2.direction
+              );
+            } else if ($2 === 2) {
+              let _record2 = model;
+              return new Model2(
+                _record2.count,
+                _record2.view_mode,
+                _record2.users,
+                _record2.useronedrafted,
+                append(
+                  model.usertwodrafted,
+                  toList([player_with_updated_adp])
+                ),
+                _record2.userthreedrafted,
+                _record2.userfourdrafted,
+                _record2.players,
+                _record2.playernumber,
+                _record2.draftpick,
+                _record2.direction
+              );
+            } else if ($2 === 3) {
+              let _record2 = model;
+              return new Model2(
+                _record2.count,
+                _record2.view_mode,
+                _record2.users,
+                _record2.useronedrafted,
+                _record2.usertwodrafted,
+                append(
+                  model.userthreedrafted,
+                  toList([player_with_updated_adp])
+                ),
+                _record2.userfourdrafted,
+                _record2.players,
+                _record2.playernumber,
+                _record2.draftpick,
+                _record2.direction
+              );
+            } else if ($2 === 4) {
+              let _record2 = model;
+              return new Model2(
+                _record2.count,
+                _record2.view_mode,
+                _record2.users,
+                _record2.useronedrafted,
+                _record2.usertwodrafted,
+                _record2.userthreedrafted,
+                append(
+                  model.userfourdrafted,
+                  toList([player_with_updated_adp])
+                ),
+                _record2.players,
+                _record2.playernumber,
+                _record2.draftpick,
+                _record2.direction
+              );
+            } else {
+              return model;
+            }
+          })();
+          let _record = new_model;
+          return new Model2(
+            _record.count,
+            _record.view_mode,
+            _record.users,
+            _record.useronedrafted,
+            _record.usertwodrafted,
+            _record.userthreedrafted,
+            _record.userfourdrafted,
+            updated_players,
+            new_playernumber,
+            new_draftpick,
+            new_direction
+          );
+        }
+      } else {
+        console_log("Cannot draft more players of this position");
+        return model;
+      }
+    } else if ($ === 2) {
+      let drafted_list = get_drafted_list(model, model.playernumber);
+      let count = count_players(drafted_list, player.position);
+      console_log(player.position + " count: " + to_string(count));
+      let is_valid_draft = (() => {
+        let $1 = player.position;
+        if ($1 === "QB" && count === 0) {
+          return true;
+        } else if ($1 === "QB" && count === 1) {
+          return true;
+        } else if ($1 === "TE" && count === 0) {
+          return true;
+        } else if ($1 === "TE" && count === 1) {
+          return true;
+        } else if ($1 === "WR" && count === 0) {
+          return true;
+        } else if ($1 === "WR" && count === 1) {
+          return true;
+        } else if ($1 === "WR" && count === 2) {
+          return true;
+        } else if ($1 === "RB" && count === 0) {
+          return true;
+        } else if ($1 === "RB" && count === 1) {
+          return true;
+        } else if ($1 === "RB" && count === 2) {
+          return true;
+        } else {
+          return false;
         }
       })();
-      let _record = new_model;
-      return new Model2(
-        _record.count,
-        _record.view_mode,
-        _record.users,
-        _record.useronedrafted,
-        _record.usertwodrafted,
-        _record.userthreedrafted,
-        _record.userfourdrafted,
-        updated_players,
-        new_playernumber,
-        new_draftpick,
-        new_direction
-      );
+      if (is_valid_draft) {
+        let $1 = model.draftpick;
+        if ($1 === 40) {
+          return model;
+        } else {
+          let new_playernumber = (() => {
+            let $2 = model.direction;
+            let $3 = model.playernumber;
+            if ($2 instanceof Forward && $3 === 1) {
+              return 2;
+            } else if ($2 instanceof Forward && $3 === 2) {
+              return 3;
+            } else if ($2 instanceof Forward && $3 === 3) {
+              return 4;
+            } else if ($2 instanceof Forward && $3 === 4) {
+              return 4;
+            } else if ($2 instanceof Backward && $3 === 4) {
+              return 3;
+            } else if ($2 instanceof Backward && $3 === 3) {
+              return 2;
+            } else if ($2 instanceof Backward && $3 === 2) {
+              return 1;
+            } else if ($2 instanceof Backward && $3 === 1) {
+              return 1;
+            } else {
+              let n = $3;
+              return n;
+            }
+          })();
+          let new_direction = (() => {
+            let $2 = model.direction;
+            let $3 = model.playernumber;
+            if ($2 instanceof Forward && $3 === 4 && new_playernumber === 4) {
+              return new Backward();
+            } else if ($2 instanceof Backward && $3 === 1 && new_playernumber === 1) {
+              return new Forward();
+            } else {
+              let dir = $2;
+              return dir;
+            }
+          })();
+          let new_draftpick = model.draftpick + 1;
+          let player_with_updated_adp = (() => {
+            let _record2 = player;
+            return new Player(
+              _record2.firstname,
+              _record2.lastname,
+              _record2.position,
+              _record2.team,
+              new_draftpick
+            );
+          })();
+          let updated_players = filter(
+            model.players,
+            (p2) => {
+              return !isEqual(p2, player);
+            }
+          );
+          let new_model = (() => {
+            let $2 = model.playernumber;
+            if ($2 === 1) {
+              let _record2 = model;
+              return new Model2(
+                _record2.count,
+                _record2.view_mode,
+                _record2.users,
+                append(
+                  model.useronedrafted,
+                  toList([player_with_updated_adp])
+                ),
+                _record2.usertwodrafted,
+                _record2.userthreedrafted,
+                _record2.userfourdrafted,
+                _record2.players,
+                _record2.playernumber,
+                _record2.draftpick,
+                _record2.direction
+              );
+            } else if ($2 === 2) {
+              let _record2 = model;
+              return new Model2(
+                _record2.count,
+                _record2.view_mode,
+                _record2.users,
+                _record2.useronedrafted,
+                append(
+                  model.usertwodrafted,
+                  toList([player_with_updated_adp])
+                ),
+                _record2.userthreedrafted,
+                _record2.userfourdrafted,
+                _record2.players,
+                _record2.playernumber,
+                _record2.draftpick,
+                _record2.direction
+              );
+            } else if ($2 === 3) {
+              let _record2 = model;
+              return new Model2(
+                _record2.count,
+                _record2.view_mode,
+                _record2.users,
+                _record2.useronedrafted,
+                _record2.usertwodrafted,
+                append(
+                  model.userthreedrafted,
+                  toList([player_with_updated_adp])
+                ),
+                _record2.userfourdrafted,
+                _record2.players,
+                _record2.playernumber,
+                _record2.draftpick,
+                _record2.direction
+              );
+            } else if ($2 === 4) {
+              let _record2 = model;
+              return new Model2(
+                _record2.count,
+                _record2.view_mode,
+                _record2.users,
+                _record2.useronedrafted,
+                _record2.usertwodrafted,
+                _record2.userthreedrafted,
+                append(
+                  model.userfourdrafted,
+                  toList([player_with_updated_adp])
+                ),
+                _record2.players,
+                _record2.playernumber,
+                _record2.draftpick,
+                _record2.direction
+              );
+            } else {
+              return model;
+            }
+          })();
+          let _record = new_model;
+          return new Model2(
+            _record.count,
+            _record.view_mode,
+            _record.users,
+            _record.useronedrafted,
+            _record.usertwodrafted,
+            _record.userthreedrafted,
+            _record.userfourdrafted,
+            updated_players,
+            new_playernumber,
+            new_draftpick,
+            new_direction
+          );
+        }
+      } else {
+        console_log("Cannot draft more players of this position");
+        return model;
+      }
+    } else if ($ === 3) {
+      let drafted_list = get_drafted_list(model, model.playernumber);
+      let count = count_players(drafted_list, player.position);
+      console_log(player.position + " count: " + to_string(count));
+      let is_valid_draft = (() => {
+        let $1 = player.position;
+        if ($1 === "QB" && count === 0) {
+          return true;
+        } else if ($1 === "QB" && count === 1) {
+          return true;
+        } else if ($1 === "TE" && count === 0) {
+          return true;
+        } else if ($1 === "TE" && count === 1) {
+          return true;
+        } else if ($1 === "WR" && count === 0) {
+          return true;
+        } else if ($1 === "WR" && count === 1) {
+          return true;
+        } else if ($1 === "WR" && count === 2) {
+          return true;
+        } else if ($1 === "RB" && count === 0) {
+          return true;
+        } else if ($1 === "RB" && count === 1) {
+          return true;
+        } else if ($1 === "RB" && count === 2) {
+          return true;
+        } else {
+          return false;
+        }
+      })();
+      if (is_valid_draft) {
+        let $1 = model.draftpick;
+        if ($1 === 40) {
+          return model;
+        } else {
+          let new_playernumber = (() => {
+            let $2 = model.direction;
+            let $3 = model.playernumber;
+            if ($2 instanceof Forward && $3 === 1) {
+              return 2;
+            } else if ($2 instanceof Forward && $3 === 2) {
+              return 3;
+            } else if ($2 instanceof Forward && $3 === 3) {
+              return 4;
+            } else if ($2 instanceof Forward && $3 === 4) {
+              return 4;
+            } else if ($2 instanceof Backward && $3 === 4) {
+              return 3;
+            } else if ($2 instanceof Backward && $3 === 3) {
+              return 2;
+            } else if ($2 instanceof Backward && $3 === 2) {
+              return 1;
+            } else if ($2 instanceof Backward && $3 === 1) {
+              return 1;
+            } else {
+              let n = $3;
+              return n;
+            }
+          })();
+          let new_direction = (() => {
+            let $2 = model.direction;
+            let $3 = model.playernumber;
+            if ($2 instanceof Forward && $3 === 4 && new_playernumber === 4) {
+              return new Backward();
+            } else if ($2 instanceof Backward && $3 === 1 && new_playernumber === 1) {
+              return new Forward();
+            } else {
+              let dir = $2;
+              return dir;
+            }
+          })();
+          let new_draftpick = model.draftpick + 1;
+          let player_with_updated_adp = (() => {
+            let _record2 = player;
+            return new Player(
+              _record2.firstname,
+              _record2.lastname,
+              _record2.position,
+              _record2.team,
+              new_draftpick
+            );
+          })();
+          let updated_players = filter(
+            model.players,
+            (p2) => {
+              return !isEqual(p2, player);
+            }
+          );
+          let new_model = (() => {
+            let $2 = model.playernumber;
+            if ($2 === 1) {
+              let _record2 = model;
+              return new Model2(
+                _record2.count,
+                _record2.view_mode,
+                _record2.users,
+                append(
+                  model.useronedrafted,
+                  toList([player_with_updated_adp])
+                ),
+                _record2.usertwodrafted,
+                _record2.userthreedrafted,
+                _record2.userfourdrafted,
+                _record2.players,
+                _record2.playernumber,
+                _record2.draftpick,
+                _record2.direction
+              );
+            } else if ($2 === 2) {
+              let _record2 = model;
+              return new Model2(
+                _record2.count,
+                _record2.view_mode,
+                _record2.users,
+                _record2.useronedrafted,
+                append(
+                  model.usertwodrafted,
+                  toList([player_with_updated_adp])
+                ),
+                _record2.userthreedrafted,
+                _record2.userfourdrafted,
+                _record2.players,
+                _record2.playernumber,
+                _record2.draftpick,
+                _record2.direction
+              );
+            } else if ($2 === 3) {
+              let _record2 = model;
+              return new Model2(
+                _record2.count,
+                _record2.view_mode,
+                _record2.users,
+                _record2.useronedrafted,
+                _record2.usertwodrafted,
+                append(
+                  model.userthreedrafted,
+                  toList([player_with_updated_adp])
+                ),
+                _record2.userfourdrafted,
+                _record2.players,
+                _record2.playernumber,
+                _record2.draftpick,
+                _record2.direction
+              );
+            } else if ($2 === 4) {
+              let _record2 = model;
+              return new Model2(
+                _record2.count,
+                _record2.view_mode,
+                _record2.users,
+                _record2.useronedrafted,
+                _record2.usertwodrafted,
+                _record2.userthreedrafted,
+                append(
+                  model.userfourdrafted,
+                  toList([player_with_updated_adp])
+                ),
+                _record2.players,
+                _record2.playernumber,
+                _record2.draftpick,
+                _record2.direction
+              );
+            } else {
+              return model;
+            }
+          })();
+          let _record = new_model;
+          return new Model2(
+            _record.count,
+            _record.view_mode,
+            _record.users,
+            _record.useronedrafted,
+            _record.usertwodrafted,
+            _record.userthreedrafted,
+            _record.userfourdrafted,
+            updated_players,
+            new_playernumber,
+            new_draftpick,
+            new_direction
+          );
+        }
+      } else {
+        console_log("Cannot draft more players of this position");
+        return model;
+      }
+    } else if ($ === 4) {
+      let drafted_list = get_drafted_list(model, model.playernumber);
+      let count = count_players(drafted_list, player.position);
+      console_log(player.position + " count: " + to_string(count));
+      let is_valid_draft = (() => {
+        let $1 = player.position;
+        if ($1 === "QB" && count === 0) {
+          return true;
+        } else if ($1 === "QB" && count === 1) {
+          return true;
+        } else if ($1 === "TE" && count === 0) {
+          return true;
+        } else if ($1 === "TE" && count === 1) {
+          return true;
+        } else if ($1 === "WR" && count === 0) {
+          return true;
+        } else if ($1 === "WR" && count === 1) {
+          return true;
+        } else if ($1 === "WR" && count === 2) {
+          return true;
+        } else if ($1 === "RB" && count === 0) {
+          return true;
+        } else if ($1 === "RB" && count === 1) {
+          return true;
+        } else if ($1 === "RB" && count === 2) {
+          return true;
+        } else {
+          return false;
+        }
+      })();
+      if (is_valid_draft) {
+        let $1 = model.draftpick;
+        if ($1 === 40) {
+          return model;
+        } else {
+          let new_playernumber = (() => {
+            let $2 = model.direction;
+            let $3 = model.playernumber;
+            if ($2 instanceof Forward && $3 === 1) {
+              return 2;
+            } else if ($2 instanceof Forward && $3 === 2) {
+              return 3;
+            } else if ($2 instanceof Forward && $3 === 3) {
+              return 4;
+            } else if ($2 instanceof Forward && $3 === 4) {
+              return 4;
+            } else if ($2 instanceof Backward && $3 === 4) {
+              return 3;
+            } else if ($2 instanceof Backward && $3 === 3) {
+              return 2;
+            } else if ($2 instanceof Backward && $3 === 2) {
+              return 1;
+            } else if ($2 instanceof Backward && $3 === 1) {
+              return 1;
+            } else {
+              let n = $3;
+              return n;
+            }
+          })();
+          let new_direction = (() => {
+            let $2 = model.direction;
+            let $3 = model.playernumber;
+            if ($2 instanceof Forward && $3 === 4 && new_playernumber === 4) {
+              return new Backward();
+            } else if ($2 instanceof Backward && $3 === 1 && new_playernumber === 1) {
+              return new Forward();
+            } else {
+              let dir = $2;
+              return dir;
+            }
+          })();
+          let new_draftpick = model.draftpick + 1;
+          let player_with_updated_adp = (() => {
+            let _record2 = player;
+            return new Player(
+              _record2.firstname,
+              _record2.lastname,
+              _record2.position,
+              _record2.team,
+              new_draftpick
+            );
+          })();
+          let updated_players = filter(
+            model.players,
+            (p2) => {
+              return !isEqual(p2, player);
+            }
+          );
+          let new_model = (() => {
+            let $2 = model.playernumber;
+            if ($2 === 1) {
+              let _record2 = model;
+              return new Model2(
+                _record2.count,
+                _record2.view_mode,
+                _record2.users,
+                append(
+                  model.useronedrafted,
+                  toList([player_with_updated_adp])
+                ),
+                _record2.usertwodrafted,
+                _record2.userthreedrafted,
+                _record2.userfourdrafted,
+                _record2.players,
+                _record2.playernumber,
+                _record2.draftpick,
+                _record2.direction
+              );
+            } else if ($2 === 2) {
+              let _record2 = model;
+              return new Model2(
+                _record2.count,
+                _record2.view_mode,
+                _record2.users,
+                _record2.useronedrafted,
+                append(
+                  model.usertwodrafted,
+                  toList([player_with_updated_adp])
+                ),
+                _record2.userthreedrafted,
+                _record2.userfourdrafted,
+                _record2.players,
+                _record2.playernumber,
+                _record2.draftpick,
+                _record2.direction
+              );
+            } else if ($2 === 3) {
+              let _record2 = model;
+              return new Model2(
+                _record2.count,
+                _record2.view_mode,
+                _record2.users,
+                _record2.useronedrafted,
+                _record2.usertwodrafted,
+                append(
+                  model.userthreedrafted,
+                  toList([player_with_updated_adp])
+                ),
+                _record2.userfourdrafted,
+                _record2.players,
+                _record2.playernumber,
+                _record2.draftpick,
+                _record2.direction
+              );
+            } else if ($2 === 4) {
+              let _record2 = model;
+              return new Model2(
+                _record2.count,
+                _record2.view_mode,
+                _record2.users,
+                _record2.useronedrafted,
+                _record2.usertwodrafted,
+                _record2.userthreedrafted,
+                append(
+                  model.userfourdrafted,
+                  toList([player_with_updated_adp])
+                ),
+                _record2.players,
+                _record2.playernumber,
+                _record2.draftpick,
+                _record2.direction
+              );
+            } else {
+              return model;
+            }
+          })();
+          let _record = new_model;
+          return new Model2(
+            _record.count,
+            _record.view_mode,
+            _record.users,
+            _record.useronedrafted,
+            _record.usertwodrafted,
+            _record.userthreedrafted,
+            _record.userfourdrafted,
+            updated_players,
+            new_playernumber,
+            new_draftpick,
+            new_direction
+          );
+        }
+      } else {
+        console_log("Cannot draft more players of this position");
+        return model;
+      }
+    } else {
+      console_log("Invalid player number");
+      return model;
     }
   }
 }
