@@ -88,8 +88,9 @@
 
 .availablePlayers{
     height: 350px;
-    width: 50%;
+    width: 45%;
     overflow-y: auto;
+    margin-top: 8px;
 }
 .draftablePlayer {
     display: flex;
@@ -115,4 +116,77 @@
 .posName {
     display: flex !important;
     flex-direction: row !important;
+}
+
+.roster {
+    display: flex;
+    flex-direction: row;
+    height: 350px;
+    width: 65%;
+    margin-top: 8px;
+}
+.roster .sectionHeader{
+    margin-top: 5px;
+}
+.roster .draftedHeader {
+    height: 100%;
+    width: 350px;
+}
+.draftedHeader .draftedHeaderTop{
+    height: 100%;
+}
+
+.QBList {
+    height: 25%;
+    margin-bottom: 19px;
+}
+
+.RBList {
+    height: 44%;
+}
+
+.WRList {
+    height: 44%;
+}
+
+.TEList {
+    height: 25%;
+}
+
+.position-box {
+    width: 70px;
+    display: flex;
+    margin-bottom: 10px;
+    padding-left: 25px;
+}
+
+.quaterback span,
+.runningback span,
+.widereceiver span,
+.tightend span {
+    display: inline-block;
+    width: 45px;
+    text-align: center;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.quaterback span { 
+    background-color: #2E4053; 
+}
+.runningback span { 
+    background-color: #697565; 
+}
+.widereceiver span { 
+    background-color: #3C3D37; 
+}
+.tightend span { 
+    background-color: #AA9C87; 
+}
+
+.drafted{
+    margin-top: 8px;
+    margin-bottom: 23px;
+    margin-left: 10px;
+    font-size: 20px;
 }

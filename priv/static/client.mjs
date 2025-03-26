@@ -2390,7 +2390,13 @@ function init2(_) {
       new Player("Khalil", "Shakir", "WR", "BUF", 43),
       new Player("Ladd", "McConkey", "WR", "LAC", 44),
       new Player("Sam", "Darnold", "QB", "MIN", 45),
-      new Player("Bucky", "Iriving", "RB", "TB", 46)
+      new Player("Bucky", "Iriving", "RB", "TB", 46),
+      new Player("Mike", "Gesicki", "TE", "TB", 47),
+      new Player("Eric", "All Jr", "TE", "Cin", 48),
+      new Player("Jonathan", "Brooks", "RB", "Car", 49),
+      new Player("Chubba", "Hubbard", "RB", "Car", 50),
+      new Player("Zach", "Ertz", "TE", "Was", 51),
+      new Player("Tucker", "Craft", "TE", "GB", 52)
     ]),
     1,
     0,
@@ -3195,10 +3201,52 @@ function update(model, msg) {
     }
   }
 }
+function get_position_list(model, playernumber, position) {
+  let drafted_list = (() => {
+    if (playernumber === 1) {
+      return model.useronedrafted;
+    } else if (playernumber === 2) {
+      return model.usertwodrafted;
+    } else if (playernumber === 3) {
+      return model.userthreedrafted;
+    } else if (playernumber === 4) {
+      return model.userfourdrafted;
+    } else {
+      return toList([]);
+    }
+  })();
+  return filter(
+    drafted_list,
+    (player) => {
+      return player.position === position;
+    }
+  );
+}
 function round_label(round3) {
   return p(
     toList([class$("mb-2")]),
     toList([text2("Round " + to_string(round3))])
+  );
+}
+function create_position_box(abbr, fullname) {
+  return div(
+    toList([class$("position-box " + fullname)]),
+    toList([span(toList([]), toList([text(abbr)]))])
+  );
+}
+function render_position_list(model, playernumber, position) {
+  let qb_players = get_position_list(model, playernumber, position);
+  return div(
+    toList([]),
+    map(
+      qb_players,
+      (player) => {
+        return p(
+          toList([class$("drafted")]),
+          toList([text(player.firstname + " " + player.lastname)])
+        );
+      }
+    )
   );
 }
 function drafted_users_view(players) {
@@ -3257,7 +3305,7 @@ function drafted_users_view(players) {
     ])
   );
 }
-function draft_view(users, players, useronedrafted, usertwodrafted, userthreedrafted, userfourdrafted) {
+function draft_view(model, users, players, useronedrafted, usertwodrafted, userthreedrafted, userfourdrafted, playernumber) {
   return div(
     toList([class$("p-4 text-white")]),
     toList([
@@ -3315,59 +3363,143 @@ function draft_view(users, players, useronedrafted, usertwodrafted, userthreedra
         ])
       ),
       div(
-        toList([class$("availablePlayers")]),
+        toList([class$("flex flex-row")]),
         toList([
           div(
-            toList([]),
-            map(
-              players,
-              (player) => {
-                return div(
-                  toList([class$("draftablePlayer")]),
-                  toList([
-                    div(
-                      toList([]),
+            toList([class$("availablePlayers")]),
+            toList([
+              div(
+                toList([]),
+                map(
+                  players,
+                  (player) => {
+                    return div(
+                      toList([class$("draftablePlayer")]),
                       toList([
-                        p(
+                        div(
+                          toList([]),
                           toList([
-                            class$("draftPlayer"),
-                            on_click(new IncrementPlayerNumber(player))
-                          ]),
-                          toList([text2("+")])
-                        )
-                      ])
-                    ),
-                    div(
-                      toList([]),
-                      toList([
-                        p(
-                          toList([class$("ml-2 firstName")]),
-                          toList([
-                            text2(
-                              player.firstname + " " + player.lastname
+                            p(
+                              toList([
+                                class$("draftPlayer"),
+                                on_click(
+                                  new IncrementPlayerNumber(player)
+                                )
+                              ]),
+                              toList([text2("+")])
                             )
                           ])
                         ),
                         div(
-                          toList([class$("posName")]),
+                          toList([]),
                           toList([
-                            span(
-                              toList([class$("ml-2")]),
-                              toList([text2(player.position)])
+                            p(
+                              toList([class$("ml-2 firstName")]),
+                              toList([
+                                text2(
+                                  player.firstname + " " + player.lastname
+                                )
+                              ])
                             ),
-                            span(toList([]), toList([text2(" - ")])),
-                            span(
-                              toList([]),
-                              toList([text2(player.team)])
+                            div(
+                              toList([class$("posName")]),
+                              toList([
+                                span(
+                                  toList([class$("ml-2")]),
+                                  toList([text2(player.position)])
+                                ),
+                                span(
+                                  toList([]),
+                                  toList([text2(" - ")])
+                                ),
+                                span(
+                                  toList([]),
+                                  toList([text2(player.team)])
+                                )
+                              ])
                             )
                           ])
                         )
                       ])
-                    )
-                  ])
-                );
-              }
-            )
+                    );
+                  }
+                )
+              )
+            ])
+          ),
+          div(
+            toList([class$("roster")]),
+            toList([
+              div(
+                toList([class$("positionHeader")]),
+                toList([
+                  create_position_box("QB", "quaterback"),
+                  create_position_box("QB", "quaterback"),
+                  create_position_box("RB", "runningback"),
+                  create_position_box("RB", "runningback"),
+                  create_position_box("RB", "runningback")
+                ])
+              ),
+              div(
+                toList([class$("draftedHeader")]),
+                toList([
+                  div(
+                    toList([class$("QBList")]),
+                    toList([
+                      render_position_list(model, model.playernumber, "QB")
+                    ])
+                  ),
+                  div(
+                    toList([class$("RBList")]),
+                    toList([
+                      render_position_list(model, model.playernumber, "RB")
+                    ])
+                  )
+                ])
+              ),
+              div(
+                toList([class$("positionHeader")]),
+                toList([
+                  div(
+                    toList([class$("position-box widereceiver")]),
+                    toList([span(toList([]), toList([text2("WR")]))])
+                  ),
+                  div(
+                    toList([class$("position-box widereceiver")]),
+                    toList([span(toList([]), toList([text2("WR")]))])
+                  ),
+                  div(
+                    toList([class$("position-box widereceiver")]),
+                    toList([span(toList([]), toList([text2("WR")]))])
+                  ),
+                  div(
+                    toList([class$("position-box tightend")]),
+                    toList([span(toList([]), toList([text2("TE")]))])
+                  ),
+                  div(
+                    toList([class$("position-box tightend")]),
+                    toList([span(toList([]), toList([text2("TE")]))])
+                  )
+                ])
+              ),
+              div(
+                toList([class$("draftedHeader")]),
+                toList([
+                  div(
+                    toList([class$("WRList")]),
+                    toList([
+                      render_position_list(model, model.playernumber, "WR")
+                    ])
+                  ),
+                  div(
+                    toList([class$("TEList")]),
+                    toList([
+                      render_position_list(model, model.playernumber, "TE")
+                    ])
+                  )
+                ])
+              )
+            ])
           )
         ])
       )
@@ -3431,12 +3563,14 @@ function view(model) {
             ]),
             toList([
               draft_view(
+                model,
                 model.users,
                 model.players,
                 model.useronedrafted,
                 model.usertwodrafted,
                 model.userthreedrafted,
-                model.userfourdrafted
+                model.userfourdrafted,
+                model.playernumber
               )
             ])
           );
